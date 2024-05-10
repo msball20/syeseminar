@@ -1,0 +1,280 @@
+---
+title: "Maps"
+format: html
+editor: visual
+---in
+---
+
+```{r}
+library(maps)
+```
+
+```{r}
+# list of canadian cities 
+canada.cities
+```
+
+```{r}
+data(countyMapEnv)
+```
+
+```{r}
+# Washington split up into counties 
+ map('county', 'washington', fill = TRUE, col = palette())
+```
+
+```{r}
+data(county.fips)
+```
+
+```{r}
+state.fips
+```
+
+```{r}
+map('france', fill = TRUE, col = 1:10)
+```
+
+```{r}
+identify(map("state", fill = TRUE, col = 0))
+    if(require(mapproj))
+      identify(map("world", proj = "lagrange", fill = TRUE, col = 0, wrap=c(-180,180,-90)))
+```
+
+```{r}
+ # France and all its overseas departments, territories etc.
+    sov.expand("France") # France and all its overseas departments, territories etc.
+    # Canary Islands are not included in map("Spain")
+    iso.expand("ES")
+    map(regions=sov.expand("Spain"))
+    # draw a map with ISO codes as labels:
+    wm <- map("world", fill=TRUE, col=0, xlim=c(-10,40), ylim=c(30,60))
+    # take out islands, but you loose e.g. UK, New Zealand, small island states
+    nam <- grep(":", wm$names, inv=TRUE, val=TRUE)
+    # ad ISO codes as label
+    map.text(wm, regions=nam, label=iso.alpha(nam), col=2, exact=TRUE, add=TRUE)
+```
+
+```{r}
+map() # low resolution map of the world
+    map(wrap = c(0,360), fill = TRUE, col = 2) # pacific-centered map of the world
+    map(wrap = c(0, 360, NA), fill = TRUE, col = 2) # idem, without Antarctica
+    map('usa') # national boundaries
+    map('county', 'new jersey') # county map of New Jersey
+    map('state', region = c('new york', 'new jersey', 'penn')) # map of three states
+    map("state", ".*dakota", myborder = 0) # map of the dakotas
+    map.axes() # show the effect of myborder = 0
+    if(require(mapproj))
+      map('state', proj = 'bonne', param = 45) # Bonne equal-area projection of states
+    # names of the San Juan islands in Washington state
+    map('county', 'washington,san', names = TRUE, plot = FALSE)
+    # national boundaries in one linetype, states in another
+    # (figure 5 in the reference)
+    map("state", interior = FALSE)
+    map("state", boundary = FALSE, lty = 2, add = TRUE)
+    # plot the ozone data on a base map
+```
+
+```{r}
+map('world')
+map('lakes', add=TRUE, fill=TRUE, col='white', boundary='black')
+```
+
+```{r}
+#
+ map("state")
+    map.axes(cex.axis=0.8)
+```
+
+```{r}
+# Add Cities to Existing Map
+map("world", "China")
+    map.cities(country = "China", capitals = 2)
+    map("state", "New Jersey")
+    data(us.cities)
+    map.cities(us.cities, country="NJ")
+```
+
+```{r}
+# Add Scale to Existing Unprojected Map
+map("world", "China")
+    map.scale()
+```
+
+```{r}
+# Draw a map with labeled regions
+map.text("world", "ira")    # iran and iraq
+    map.text("state", "penn")
+    map.text("county", "penn")  # Pennsylvania counties
+    map.text("county", "new jersey")  # New Jersey counties
+```
+
+```{r}
+# Locate pointson a map 
+ # NYC
+    map.where("state", -73.8, 41)
+    # Auckland
+    map.where("nz", 174.6, -36.92)
+    # find both in the world
+    map.where(x = c(174.6, -73.8), y = c(-36.92, 41))
+    # with a map object:
+    m = map("state", "new york", fill = TRUE, plot = FALSE)
+    map.where(m, -73.8, 41)
+```
+
+```{r}
+# Index map regions
+    # filled map showing Republican vote in 1900
+    # (figure 6 in the reference)
+    data(state, package = "datasets")
+    data(votes.repub)
+    state.to.map <- match.map("state", state.name)
+    x <- votes.repub[state.to.map, "1900"]
+    gray.colors <- function(n) gray(rev(0:(n - 1))/n)
+    color <- gray.colors(100)[floor(x)]
+    map("state", fill = TRUE, col = color); map("state", add = TRUE)
+```
+
+```{r}
+# map of new zealand 
+map('nz')
+    map('nz', xlim = c(166, 179), ylim = c(-48, -34))
+```
+
+```{r}
+# smooth out map
+ # compare to the example for match.map
+    data(state, package = "datasets")
+    data(votes.repub)
+    z = votes.repub[, "1900"]
+    m = map("state", fill = TRUE, plot = FALSE)
+    # use a small span to fill in, but not smooth, the data
+    # increase the resolution to get better results
+    fit = smooth.map(m, z, span = 1/100, merge = TRUE, ave = TRUE)
+    mat = tapply(fit$z, fit[1:2], mean)
+    gray.colors <- function(n) gray(rev(0:(n - 1))/n)
+    par(bg = "blue")
+    filled.contour(mat, color.palette = gray.colors, nlev = 32, asp = 1)
+    # another way to visualize:
+    image(mat, col = gray.colors(100))
+    # for a higher degree of smoothing:
+    # fit = smooth.map(m, z, merge = TRUE, ave = TRUE)
+    # interpolation, state averages are preserved:
+    # fit = smooth.map(m, z, merge = TRUE, ave = TRUE, type = "interp")
+```
+
+```{r}
+# United States boundaries map
+map('state', fill = TRUE, col = palette())
+```
+
+```{r}
+ map('state.carto', fill = TRUE, col = palette())
+```
+
+```{r}
+library(maps)
+library(ggplot2)
+world_map <- map_data("world")
+```
+
+```{r}
+#Creat a base plot with gpplot2
+p <- ggplot() + coord_fixed() +
+  xlab("") + ylab("")
+
+#Add map to base plot
+base_world_messy <- p + geom_polygon(data=world_map, aes(x=long, y=lat, group=group), 
+                               colour="light green", fill="light green")
+
+base_world_messy
+```
+
+```{r}
+cleanup <- 
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+        panel.background = element_rect(fill = 'white', colour = 'white'), 
+        axis.line = element_line(colour = "white"), legend.position="none",
+        axis.ticks=element_blank(), axis.text.x=element_blank(),
+        axis.text.y=element_blank())
+
+base_world <- base_world_messy + cleanup
+
+base_world
+```
+
+```{r}
+# Copenhangen
+map_data <- 
+  base_world +
+  geom_point(data=world_map, 
+             aes(x=12.665723, y=55.59653), colour="Deep Pink", 
+             fill="Pink",pch=21, size=5, alpha=I(0.7))
+
+map_data
+```
+
+```{r}
+# New York
+map_data <- 
+  base_world +
+  geom_point(data=world_map, 
+             aes(x=-74.0060, y=40.7128), colour="Deep Pink", 
+             fill="Pink",pch=21, size=5, alpha=I(0.7))
+
+map_data
+```
+
+```{r}
+# All three 
+map_data <- 
+  base_world +
+  geom_point(data=world_map, 
+             aes(x=-122.8977, y=48.71035), colour="Deep Pink", 
+             fill="Pink",pch=21, size=5, alpha=I(0.7), label = region) + 
+  geom_point(data=world_map, 
+             aes(x=-74.0060, y=40.7128), colour="Deep Pink", 
+             fill="Pink",pch=21, size=5, alpha=I(0.7)) + 
+  geom_point(data=world_map, 
+             aes(x=12.665723, y=55.59653), colour="Deep Pink", 
+             fill="Pink",pch=21, size=5, alpha=I(0.7)) 
+ 
+
+```
+
+```{r}
+library(leaflet)
+```
+
+```{r}
+map <- leaflet()
+map
+```
+
+```{r}
+map <- leaflet() %>% 
+       addTiles()
+```
+
+```{r}
+map <- leaflet() %>% 
+       addTiles() %>% 
+       addMarkers(lng=12.665723, lat=55.59653,  
+                  popup="Copenhagen, Denmark") %>%
+      addMarkers(lng=74.0060, lat=40.7128,  
+                  popup="New York, New York") %>%
+  addMarkers(lng=122.8977, lat=48.71035,  
+                  popup="Seattle, Washington")
+map
+```
+
+
+The races I have completed:
+Copenhagen Marathon - 2023 - finished in 3:55:55
+New York City Marathon - 2023 - finished in 3:54:50
+Seattle Half Marathon - 2019 - finished in 2:05:30
+
+My Findings: 
+I started this project because I wanted to do something about marathons, and the different races I have completed around the world. Although there may not be a lot, I have completed some in different states and even different countries. I thought it would be interesting to integrate my love for running with r studio for this class. I wanted to learn a new skill in r so I learned how to use the maps package, combine the maps package with the ggplot package, and the leaflets package. It was very hard at first to create the maps since I was used to creating plots and graphs in r. I found that combining the maps package with ggplot made the maps look better. It helped create a better looking base map to then put my different dots onto it. I then familiarized myself with the leaflets package. This package allowed me to label my maps and create popups with my desired information on it.
+
+The maps were very fun to work with especially because I had never done anything life this in R. I actually did not even know it was possible to create maps using R studio. This initial project that I worked on inspired me to then look more into marathons. I decided after this to analyze data on all of the major marathons. I wanted to see what different factors like gender, race location, origin country had on the participants. The maps and leaflets project inspirpred my further analysis on the major marathons. 

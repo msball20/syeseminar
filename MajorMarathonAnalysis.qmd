@@ -1,0 +1,482 @@
+---
+title: "MajorMarathonAnalysis"
+format: html
+editor: visual
+---
+
+```{r}
+library(ggplot2)
+library(readr)
+library(dplyr)
+library(lubridate)
+```
+
+```{r}
+marathon_data <- read_csv("/Users/callieballaine/Desktop/syeseminar/world_marathon_majors.csv")
+```
+
+Analysis Questions:
+
+Separate data set for female runners:
+
+```{r}
+female_runners <- marathon_data |> 
+  filter(gender == "Female")
+```
+
+Seperate data set for male runners:
+
+```{r}
+male_runners <- marathon_data |> 
+  filter(gender == "Male")
+```
+
+A line chart of the top woman from each year of the Boston marathon:
+
+```{r}
+# Filter dataset to include only female runners and data for the Boston marathon
+boston_female_runners <- marathon_data |>
+  filter(gender == "Female" & marathon == "Boston")
+
+# Group data by year and find top woman for each year
+top_woman_each_year <- boston_female_runners |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create line chart of the top woman from each year of the Boston marathon
+ggplot(top_woman_each_year, aes(x = year, y = time)) +
+  geom_line() +
+  labs(title = "Top Woman from Each Year of the Boston Marathon",
+       x = "Year",
+       y = "Finish Time") +
+  theme_minimal()
+```
+
+Turn that plot into a dot plot to see where these top runners are from:
+
+```{r}
+ggplot(top_woman_each_year, aes(x = year, y = time, color = country)) +
+  geom_point(size = 3) +
+  labs(title = "Where the Top Women in the Boston Marathon are From",
+       x = "Year",
+       y = "Finish Time") +
+  theme_minimal()
+```
+
+A line chart of the top woman from each year of the Boston marathon:
+
+```{r}
+# Filter dataset to include only male runners and data for the Boston marathon
+boston_male_runners <- marathon_data |>
+  filter(gender == "Male" & marathon == "Boston")
+
+# Group data by year and find top men for each year
+top_men_each_year <- boston_male_runners |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create line chart of the top male from each year of the Boston marathon
+ggplot(top_men_each_year, aes(x = year, y = time)) +
+  geom_line() +
+  labs(title = "Top Men from Each Year of the Boston Marathon",
+       x = "Year",
+       y = "Finish Time") +
+  theme_minimal()
+```
+
+Combine the two male and female plots from the Boston marathon: This is type of plot in my shiny app that will show up if the only the race location is inputted by the user, and not the year. I have a plot of what they should look like for all six locations.
+
+```{r}
+ggplot() +
+  geom_line(data = top_men_each_year, aes(x = year, y = time, color = "Male")) +
+  geom_line(data = top_woman_each_year, aes(x = year, y = time, color = "Female")) +
+  scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  labs(title = "Top Runners from Each Year of the Boston Marathon",
+       x = "Year",
+       y = "Finish Time",
+       color = "Gender") +
+  theme_minimal()
+# The first female didnt run until 1967 so that is why the woman runner doesnt start until then
+```
+
+This plot shows that men having been running marathons a lot longer than females, especially the Boston Marathon since it is the oldest of the six. It also shows then males and females times started to significantly decrease around the same time. Males times are still significantly faster than females. Lets look at the comparison of males and females in each of the six major marathons.
+
+Chicago Marathon:
+
+```{r}
+# Filter dataset to include only data for the Chicago marathon
+chicago_runners <- marathon_data |>
+  filter(marathon == "Chicago")
+
+# Group data by year and find top male and female runners for each year
+top_men_each_year_chi <- chicago_runners |>
+  filter(gender == "Male") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+top_women_each_year_chi <- chicago_runners |>
+  filter(gender == "Female") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create plot showing top runners from each year of the Chicago Marathon
+ggplot() +
+  geom_line(data = top_men_each_year_chi, aes(x = year, y = time, color = "Male")) +
+  geom_line(data = top_women_each_year_chi, aes(x = year, y = time, color = "Female")) +
+  scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  labs(title = "Top Runners from Each Year of the Chicago Marathon",
+       x = "Year",
+       y = "Finish Time",
+       color = "Gender") +
+  theme_minimal()
+```
+
+This plot is a lot less condensed than the Boston Marathon plot because the Chicago marathon started more recently. Female and male times follow a very similar trajectory, however, the males times have always stayed an equidistant faster over all the years.
+
+New York City Marathon:
+
+```{r}
+# Filter dataset to include only data for the NYC marathon
+nyc_runners <- marathon_data |>
+  filter(marathon == "NYC")
+
+# Group data by year and find top male and female runners for each year
+top_men_each_year_nyc <- nyc_runners |>
+  filter(gender == "Male") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+top_women_each_year_nyc <- nyc_runners |>
+  filter(gender == "Female") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create plot showing top runners from each year of the NYC Marathon
+ggplot() +
+  geom_line(data = top_men_each_year_nyc, aes(x = year, y = time, color = "Male")) +
+  geom_line(data = top_women_each_year_nyc, aes(x = year, y = time, color = "Female")) +
+  scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  labs(title = "Top Runners from Each Year of the NYC Marathon",
+       x = "Year",
+       y = "Finish Time",
+       color = "Gender") +
+  theme_minimal()
+```
+
+The NYC Marathon plot looks very similar to the Chicago Marathon plot. The NYC marathon started 10 years before the Chicago marathon. The males and females both decrease around 1975 and then both stay around the same times until 2018. The females stay around 2:25:00 and the males stay around 2:10:00.
+
+London Marathon:
+
+```{r}
+# Filter dataset to include only data for the London marathon
+london_runners <- marathon_data |>
+  filter(marathon == "London")
+
+# Group data by year and find top male and female runners for each year
+top_men_each_year_lon <- london_runners |>
+  filter(gender == "Male") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+top_women_each_year_lon <- london_runners |>
+  filter(gender == "Female") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create plot showing top runners from each year of the London Marathon
+ggplot() +
+  geom_line(data = top_men_each_year_lon, aes(x = year, y = time, color = "Male")) +
+  geom_line(data = top_women_each_year_lon, aes(x = year, y = time, color = "Female")) +
+  scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  labs(title = "Top Runners from Each Year of the London Marathon",
+       x = "Year",
+       y = "Finish Time",
+       color = "Gender") +
+  theme_minimal()
+```
+
+This plot is the most interesting of the six. The female times fluctuate up and down throughout the years. The male times stay pretty consistent throughout the years. The male and female difference in time is similar to that of the NYC marathon from 1975-2018.
+
+Berlin Marathon:
+
+```{r}
+# Filter dataset to include only data for the Berlin marathon
+berlin_runners <- marathon_data |>
+  filter(marathon == "Berlin")
+
+# Group data by year and find top male and female runners for each year
+top_men_each_year_berlin <- berlin_runners |>
+  filter(gender == "Male") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+top_women_each_year_berlin <- berlin_runners |>
+  filter(gender == "Female") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create plot showing top runners from each year of the Berlin Marathon
+ggplot() +
+  geom_line(data = top_men_each_year_berlin, aes(x = year, y = time, color = "Male")) +
+  geom_line(data = top_women_each_year_berlin, aes(x = year, y = time, color = "Female")) +
+  scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  labs(title = "Top Runners from Each Year of the Berlin Marathon",
+       x = "Year",
+       y = "Finish Time",
+       color = "Gender") +
+  theme_minimal()
+```
+
+The Berlin Marathon plot shows a sharp decline between 1970-1980. After that, the males and females keep at a similar distance to the other six marathons. After 1980 the male and female times do not differ much.
+
+Tokyo Marathon:
+
+```{r}
+# Filter dataset to include only data for the Tokyo marathon
+tokyo_runners <- marathon_data |>
+  filter(marathon == "Tokyo")
+
+# Group data by year and find top male and female runners for each year
+top_men_each_year_tok <- tokyo_runners |>
+  filter(gender == "Male") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+top_women_each_year_tok <- tokyo_runners |>
+  filter(gender == "Female") |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create plot showing top runners from each year of the Tokyo Marathon
+ggplot() +
+  geom_line(data = top_men_each_year_tok, aes(x = year, y = time, color = "Male")) +
+  geom_line(data = top_women_each_year_tok, aes(x = year, y = time, color = "Female")) +
+  scale_color_manual(values = c("Male" = "blue", "Female" = "red")) +
+  labs(title = "Top Runners from Each Year of the Tokyo Marathon",
+       x = "Year",
+       y = "Finish Time",
+       color = "Gender") +
+  theme_minimal()
+```
+
+This plot differs a lot from the other five plots. This is because the Tokyo marathon started much later than the other five. This makes the plot a lot more spread out. There is no sharp incline or decline in time because the data is only over the span of 10 years.
+
+In my shiny app, in the first tab there is the option to input race location and year, and above I showed the plot that would appear if the user only inputs the race location. However, if the user only inputs the year I also need a plot. I am going to use 2017 as an example. This is the plot that will be outputted:
+
+```{r}
+# Filter dataset to include only data for the specific year
+specific_year_data <- marathon_data |>
+  filter(year == 2017)
+
+# Group data by race and gender and find the finish times 
+gender_times <- specific_year_data |>
+  group_by(marathon, gender) |>
+   summarize(total_time = sum(time) / 3600) # do this to get the bar chart into hours
+
+# Create bar plot comparing the total finish time of male and female runners for all six races
+ggplot(gender_times, aes(x = marathon, y = total_time, fill = gender)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = paste("Total Finish Time of Male and Female Runners for Each Race in 2017"),
+       x = "Race",
+       y = "Total Finish Time",
+       fill = "Gender") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# I could create a specific year variable so that the year change based on the user input
+```
+
+Which country has the most amount of major marathon winners?
+
+```{r}
+winners_by_country <- marathon_data |>
+  group_by(country) |>
+  summarize(total_winners = n()) |>
+  arrange(desc(total_winners))
+head(winners_by_country)
+```
+
+```{r}
+winners_by_country$country <- factor(winners_by_country$country, levels = winners_by_country$country[order(winners_by_country$total_winners, decreasing = TRUE)])
+
+ggplot(winners_by_country, aes(x = country, y = total_winners)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Number of Major Marathon Winners by Country",
+       x = "Country",
+       y = "Total Winners") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Add fill by gender to see the which gender dominates for each country:
+
+```{r}
+winners_by_country_and_gender <- marathon_data |>
+  group_by(country, gender) |>
+  summarize(total_winners = n()) |>
+  arrange(desc(total_winners))
+head(winners_by_country)
+
+winners_by_country_and_gender <- winners_by_country_and_gender %>%
+  arrange(desc(total_winners))
+
+ggplot(winners_by_country_and_gender, aes(x = reorder(country, -total_winners), y = total_winners, fill = gender)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Number of Major Marathon Winners by Country",
+       x = "Country",
+       y = "Total Winners") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Kenya had the most amount of marathon winners over the years so... Lets see the top male Kenyan runners over time:
+
+```{r}
+# Filter dataset to include only male Kenyan runners
+top_kenyan_male_runners <- marathon_data |>
+  filter(country == "Kenya", gender == "Male")
+
+# Group data by year and find top male Kenyan runner for each year
+top_kenyan_male_each_year <- top_kenyan_male_runners |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create line chart of the top male Kenyan runners from each year
+ggplot(top_kenyan_male_each_year, aes(x = year, y = time, color = marathon)) +
+  geom_point() +
+  labs(title = "Top Male Kenyan Runners from Each Year",
+       x = "Year",
+       y = "Finish Time") +
+  theme_minimal()
+```
+
+Lets look at the top Kenyan women:
+
+```{r}
+# Filter dataset to include only female Kenyan runners
+top_kenyan_female_runners <- marathon_data |>
+  filter(country == "Kenya", gender == "Female")
+
+# Group data by year and find top female Kenyan runner for each year
+top_kenyan_female_each_year <- top_kenyan_female_runners |>
+  group_by(year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Create line chart of the top male Kenyan runners from each year
+ggplot(top_kenyan_female_each_year, aes(x = year, y = time, color = marathon)) +
+  geom_point() +
+  labs(title = "Top Female Kenyan Runners from Each Year",
+       x = "Year",
+       y = "Finish Time") +
+  theme_minimal()
+```
+
+Are their any runners that have won multiple marathons?
+
+```{r}
+multiple_wins <- marathon_data |>
+  group_by(winner) |>
+  summarize(total_wins = n_distinct(marathon)) |>
+  filter(total_wins > 2) |> # greater than two because the graph was too crowded when it was just greater than 1 
+  arrange(desc(total_wins))
+```
+
+```{r}
+ggplot(multiple_wins, aes(x = reorder(winner, -total_wins), y = total_wins)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Runners Who Have Won Multiple Marathons",
+       x = "Runner ID",
+       y = "Number of Marathons Won") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+Are different courses harder than others? Obviously the difficulty of a marathon varies based on a runners opinion, however, each of the major world marathons have a reputation. London and Tokyo are the hardest to qualify for, so therefore faster runners tend to compete in them. This could make winning the race a lot more difficult. The Berlin marathon is known to be a "flat and fast" course, so times for this marathon might be higher than the other 5. People tend to run this marathon in hopes of achieving a PR time. The Boston Marathon is known for its hills, therefore the winning times might be slower. The New York City marathon is also known to be a hilly course and have a lot of foot traffic because it is much larger, both having an effect on finish times. Chicago is the flattest of the US major marathons, making times for this race possibly faster. Keeping these reputations and facts in mind, I am curious to look at the top times for both males and females over the years for each of the different races.
+
+```{r}
+# Group data by race and year and find top female runner for each race and year
+top_female_each_race_year <- female_runners |>
+  group_by(marathon, year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+# Females over the years for each race
+ggplot(top_female_each_race_year, aes(x = year, y = time)) +
+  geom_line() +
+  facet_wrap(~ marathon, scales = "free_y", ncol = 2) +
+  labs(title = "Top Times for Females Over the Years for Each Race",
+       x = "Year",
+       y = "Finish Time") +
+  theme_minimal()
+```
+
+This plot shows that woman did not run the Tokyo or London marathons until much later. All of the races have a large decrease in time between the late 1900s to now, except the London marathon. This fluctuation of times for the London Marathon could be due to weather. The face is in April and sometimes extreme weather conditions cause finishers time to be slower. It is hard to fully compare all the races with the six separate plots because they are using different scales for x and y so I am going to look at them all on one plot and scale:
+
+```{r}
+ggplot(top_female_each_race_year, aes(x = year, y = time, color = marathon)) +
+  geom_line(size = 1.5) +
+  labs(title = "Top Times for Females Over the Years for Each Race",
+       x = "Year",
+       y = "Finish Time",
+       color = "Race Location") +
+  theme_minimal()
+```
+
+This plot is a better comparison since they are all on the same scale now. Boston was the first marathon completed by a woman, then NYC, London, Berlin, Chicago, and finally Tokyo. Some of the races are newer than others as well, so that is something I need to take into consideration. I think that is so interesting. I want to add a dot at the first female runner for each location.
+
+Adding a dot to the starting face for each location:
+
+```{r}
+# Creating a dataset with this information 
+first_year_each_race <- top_female_each_race_year |>
+  group_by(marathon) |>
+  filter(year == min(year)) |>
+  ungroup()
+
+ggplot(top_female_each_race_year, aes(x = year, y = time, color = marathon)) +
+  geom_line(size = 1.5) +
+  geom_point(data = first_year_each_race, aes(x = year, y = time), color = "red", size = 3) +  # Add red points at the first year of each race
+  labs(title = "Top Times for Females Over the Years for Each Race",
+       x = "Year",
+       y = "Finish Time",
+       color = "Race Location") +
+  theme_minimal()
+```
+
+This shows the difference of times as well as when females were first starting to compete in each area. Boston has a sudden spike around 2017 in time. This could be due to weather conditions. London has the fastest time for the last reported race in the data set. This could be because it is the hardest to qualify for.
+
+Lets look at males:
+
+```{r}
+# new dataset for top male runners
+top_male_each_race_year <- male_runners |>
+  group_by(marathon, year) |>
+  slice_min(order_by = time, n = 1) |>
+  ungroup()
+
+first_year_each_race <- top_male_each_race_year |>
+  group_by(marathon) |>
+  filter(year == min(year)) |>
+  ungroup()
+
+ggplot(top_male_each_race_year, aes(x = year, y = time, color = marathon)) +
+  geom_line(size = 1) +
+  geom_point(data = first_year_each_race, aes(x = year, y = time), color = "red", size = 3) +  # Add red points at the first year of each race
+  labs(title = "Top Times for Males Over the Years for Each Race",
+       x = "Year",
+       y = "Finish Time",
+       color = "Race Location") +
+  theme_minimal()
+```
+
+This plot is a lot harder to read because the time frame for most of the races is a lot longer. The Boston marathon is the oldest of the major marathons. Tokyo is a newer marathon so that is why the start for that data is a lot later on the timeline. The male data in the more recent years is a lot more clustered and varies less. This could be because of the strong competition for each race. The male winners times in recent years are all very similar.

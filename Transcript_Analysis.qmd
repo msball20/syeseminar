@@ -1,0 +1,309 @@
+---
+title: "TranscriptAnalysis"
+format: html
+editor: visual
+---
+
+Title: Bridging the Gap: Data Visualization and Communication in Data Science
+
+Abstract:
+
+In the realm of Data Science, proficiency in data visualization is paramount. By employing visualizations, data scientists can effectively communicate their findings to an audience, enabling informed decision-making and driving success. Furthermore, in an era where data volumes are escalating exponentially, the ability to communicate insights through compelling visualizations has become a valuable skill for data scientists. Understanding the principles of rhetoric and communication equips Data Science majors with the tools to critically evaluate visualizations, discerning between informative visualizations and misleading representations of data.
+
+Through this project I am going to explore to connection between Math, Statistics, and Computer Science majors and the amount of Communications courses they take. I used data from the registrars office to analyze patterns within the population of St. Lawrence. Communication courses provide a unique set of skills that complement those of Math, Statistics, and Computer Science majors. I want to observe how St. Lawrence students within these quantitative departments choose their extra curricular courses. This project will shed light on the connection between the Communications department and analyzing and manipulating data.
+
+Loading in the data set:
+
+```{r}
+library(readxl)
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+```
+
+```{r}
+# change the path 
+graduates <- read_excel("/Users/callieballaine/Desktop/syeseminar/Transcript_Analysis.xlsx", sheet = "Graduates")
+```
+
+```{r}
+transcript_analysis <- read_excel("/Users/callieballaine/Desktop/syeseminar/Transcript_Analysis.xlsx", sheet = "Transcript Analysis")
+transcript_analysis$enrollment_year <- substr(transcript_analysis$'Enrollment Term', 1, 4)
+```
+
+```{r}
+university_value <- read_excel("/Users/callieballaine/Desktop/syeseminar/university_percentage.xls")
+```
+
+Analyzing the data:
+
+Creating a new subset of data that only includes CS, Math, and Statistics majors:
+
+```{r}
+math_cs_stat <- graduates %>% 
+    filter(major1 == "MATH"| 
+           major1 == "CS"|
+           major1 == "STAT"|
+           major2 == "MATH"| 
+           major2 == "CS"|
+           major2 == "STAT"|
+           major3 == "MATH"| 
+           major3 == "CS"|
+           major3 == "STAT")
+```
+
+Create a count variable in this subset that shows how many of each major there is:
+
+```{r}
+# Create a new dataset that combines major1, major2, major3 and then count the number of students per major
+
+# Combine major1, major2, and major3 into a single column
+combined_majors <- c(math_cs_stat$major1, math_cs_stat$major2, math_cs_stat$major3)
+
+# Create a data frame with the combined majors
+combined_data <- data.frame(major = combined_majors)
+
+# Count the number of students per major
+major_counts <- combined_data %>%
+  group_by(major) %>%
+  filter(major == "CS"|
+           major == "STAT"|
+           major == "MATH") %>%
+  summarise(number_of_students = n())
+# The results are: 
+# CS: 117
+# STAT: 103
+# MATH: 212
+```
+
+Create a ggplot comparison of the number of students there are per major:
+
+```{r}
+ggplot(major_counts, aes(x = major, y = number_of_students)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Students per Major",
+       x = "Major",
+       y = "Number of Students") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+In this data set there are the most Mathematics majors and Computer Science and Statistics have a very similar number of majors.
+
+Create a new subset of data from transcript_analysis that only includes the ID and Crs subject:
+
+```{r}
+# This dataset only incudes the student ID and the subject of the course that they enrolled in 
+subset_data <- transcript_analysis %>%
+  select('ID', 'Crs Subject', 'enrollment_year')
+```
+
+Merge that with the subset dataset math_cs_stat:
+
+```{r}
+# This dataset includes STAT, COMP SI, and MATH majors info with the Crs subject included 
+merged_data <- merge(subset_data, math_cs_stat, by = "ID")
+```
+
+Combine all three major1, major2, and major3 and then create a new data set with a combined column called major and ID:
+
+```{r}
+# This dataset just has the student id and then the majors all in one column
+combined_majors <- math_cs_stat %>%
+  rowwise() %>%
+  mutate(major = paste(na.omit(c(major1, major2, major3)), collapse = ", ")) %>%
+  select(ID, major)
+```
+
+Make a new data set that combines combined_majors and transcript_analysis that only has an ID column, major column and Crs subject column:
+
+```{r}
+# Merge the datasets by ID
+combined_simple <- merge(combined_majors, transcript_analysis, by = "ID")
+```
+
+```{r}
+# Select only the ID, major, and Crs columns
+PCA_major <- merged_data %>%
+  select(ID, major1, major2, major3, 'Crs Subject')
+```
+
+Make a dot plot that shows CS, STAT, and MATH majors on the x axis and the number to PCA courses they completed on the y axis:
+
+```{r}
+
+# Group the data by major and calculate the total number of PCA courses completed
+PCA_data <- PCA_major %>%
+  group_by(ID) %>% 
+  filter(`Crs Subject` == "PCA") %>%  # Filtering for PCA courses
+  summarize(PCA_courses_completed = n())  # count the number of PCA courses 
+```
+
+```{r}
+#merge the data for the graph 
+graph2_data <- merge(PCA_data, combined_majors, by = "ID")
+
+```
+
+```{r}
+graph2_more <- graph2_data  %>%
+   group_by(major) %>% 
+  summarize(Total_PCA_courses_completed = sum(PCA_courses_completed))
+
+```
+
+Create the dot plot that shows the number of PCA courses taken by each major/set of majors
+
+```{r}
+ggplot(graph2_more, aes(x = major, y = Total_PCA_courses_completed, color = major)) +
+  geom_point(size = 3, color = "blue") +
+  labs(title = "Number of PCA Courses Completed by Student",
+       x = "Major",
+       y = "Number of PCA Courses Completed") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+This plot is very confusing to read and word not be easy to read at first glance, therefore, I did not put it in my poster. It shows that this data set has the most amount of Mathematics majors, Mathematics and Econ double majors, Statistics, and Computer Science.
+
+```{r}
+# Create the dot plot that shows the number of PCA courses by each individual
+ggplot(graph2_data, aes(x = ID, y = PCA_courses_completed, color = major)) +
+  geom_point(size = 3) +
+  labs(title = "Number of PCA Courses Completed by Student",
+       x = "Student ID",
+       y = "Number of PCA Courses Completed") +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+```
+
+This plot is also very confusing and overwhelming. I thought that if I used the major as the color variable it would make things easier to read but there are too many combinations to look at all at once.
+
+What is the most common combination with each major?
+
+```{r}
+# filtered to be greater than 1 so the graph is easier to look at 
+count_major <- combined_majors %>%
+  group_by(major) %>%
+  summarize(major_count = n()) %>%
+  filter(major_count > 1)
+```
+
+Mathematics and Econ is the most popular combination of majors in this data set. This makes sense to me because within all of the classes I have taken during my time here I have noticed a lot of Econ majors are in my courses.
+
+Show a graph that depicts the number of people in each combination of each major:
+
+```{r}
+ggplot(count_major, aes(x = major, y = major_count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Students per Major",
+       x = "Major",
+       y = "Number of Students") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+This shows that Math, Stat, and Comp Si majors take the largest amount of PCA courses. This may be the case because they are single majors and therefore have more time in their schedule to take other courses that are not related to their major. Out of the three Math has the highest number. This could be due to the cross over between art and math.
+
+Why might this be the case?
+
+This is most likely due to the fact that this data set has the most amount of Mathematics majors.
+
+```{r}
+# the percentage of these students's courses they completed that are PCA courses 
+# majors only 
+
+240/13186 
+# = 0.0182 = 1.8%
+```
+
+Make a plot with the total number of PCA courses taken by Department per Enrollment Year. This will be a bar chart and have a dotted line that shows how it compares to the university average of all majors, not just quantitative ones.
+
+```{r}
+# total courses enrolled by enrollment year 
+total_courses <- merged_data %>%
+  group_by(enrollment_year) %>%
+  summarize(total_count = n())
+# total PCA courses enrolled by enrollment year 
+PCA_courses <- merged_data %>%
+  filter(`Crs Subject` == "PCA") %>%
+  group_by(enrollment_year) %>%
+  summarize(PCA_count = n())
+
+merged_data3 <- merge(PCA_courses, total_courses, by = c("enrollment_year"), all.x = TRUE)
+
+merged_data3 <-merged_data3 %>%
+  filter(enrollment_year != '0000')
+
+merged_data3 <- merged_data3 %>%
+  mutate(PCA_percentage = PCA_count / total_count * 100)
+
+
+```
+
+```{r}
+ggplot(merged_data3, aes(x = factor(enrollment_year), y = PCA_percentage)) +
+  geom_col(position = "dodge", fill = "skyblue") +
+  labs(title = "Percentage of PCA Courses by Department per Enrollment Year",
+       x = "Enrollment Year",
+       y = "Percentage of PCA Courses") +
+  theme_minimal()
+
+# Adding the university average 
+ggplot(merged_data3, aes(x = factor(enrollment_year), y = PCA_percentage)) +
+  geom_col(position = "dodge", fill = "skyblue") +
+  geom_hline(data = university_value, aes(yintercept = Value), color = "red", linetype = "dashed") +
+  labs(title = "Percentage of PCA Courses by Department per Enrollment Year",
+       x = "Enrollment Year",
+       y = "Percentage of PCA Courses") +
+  theme_minimal()
+```
+
+Make a plot that looks at the specific PCA courses that these students are taking. Are they more on the rhetorical side or the performing arts side?
+
+```{r}
+# Make a dataset that counts the courses categorized by title
+merged_data4 <- merge(math_cs_stat, transcript_analysis[, c("ID", "Enrollment Course Title", "Crs Subject")], by = "ID", all.x = TRUE)
+
+course_counts <- merged_data4 %>%
+  filter(`Crs Subject` == "PCA") %>%
+  group_by(`Enrollment Course Title`) %>%
+  summarize(count = n_distinct(ID)) 
+
+filtered_course_counts <- course_counts %>%
+  filter(count > 1)
+
+# Make the plot
+ggplot(filtered_course_counts, aes(x = `Enrollment Course Title`, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Students Enrolled in PCA Courses",
+       x = "Enrollment Course Title",
+       y = "Number of Students") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip()
+```
+
+It looks to me that the beginning courses that do not require pre requisite are the most common. The most common PCA course taken by Math, Statistics, and CS majors is Rhetoric & Public Speaking. I took this course and learned so much from it that could be translated into my quantitative courses. The next most common were Beginning Action and Intro to Communications. This makes sense because these are the intro courses you must take before deciding whether or not you want to be a PCA major. I assume people were exploring before they landed on their chosen major.
+
+Look at a plot that shows what the most popular NON quantitative courses:
+
+```{r}
+# Filter the merged dataset to include only classes not in Math, Stat, or Comp Sci subjects
+non_msc_classes <- merged_data4 %>%
+  filter(`Crs Subject` != "MATH" & `Crs Subject` != "STAT" & `Crs Subject` != "CS" & !is.na(`Crs Subject`)) %>%
+  group_by(`Enrollment Course Title`) %>%
+  summarize(count = n_distinct(ID))
+
+filtered_non_msc_classes <-  non_msc_classes %>%
+  filter(count > 50) #Had to make it 50 because the plot was too cluttered otherwise
+
+ggplot(filtered_non_msc_classes, aes(x = `Enrollment Course Title`, y = count)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  labs(title = "Number of Students Enrolled in Non-Math/Stat/Comp Sci Courses",
+       x = "Enrollment Course Title",
+       y = "Number of Students") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  coord_flip()
+
+```
+
+The most common course taken by students in this data set not in the quantitative departments is Intro the Economics. This makes sense because the most common combination of double majors was in Economics. Other Economics courses were very common. As well as, introductory science courses. I was not very surprised with these results because a lot of these courses are very common combinations for quantitative majors.
